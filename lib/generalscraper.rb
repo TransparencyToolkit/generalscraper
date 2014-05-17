@@ -4,11 +4,12 @@ require 'nokogiri'
 require 'open-uri'
 
 class GeneralScraper
-  def initialize(scrapesite, input)
+  def initialize(scrapesite, input, table)
    @input = input
    @scrapesite = scrapesite
    @output = Array.new
    @startindex = 10
+   @table = table
   end
 
   # Searches for links on Google
@@ -62,7 +63,9 @@ class GeneralScraper
           pagehash[m['name']] = m['content']
         end
       end
-      pagehash[:page] = html.css("body").text
+      if @table == false
+        pagehash[:page] = html.css("body").text
+      end
       @output.push(pagehash)
     rescue
       puts "URL: " + url

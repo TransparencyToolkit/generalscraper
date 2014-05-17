@@ -2,6 +2,6 @@ This gem scrapes pages on the site of your choice via Google (by running site:si
 
 To use-
 1. Download the gem 'generalscraper' and add it to your gemfile
-2. Maked a new GeneralScraper object: l = GeneralScraper.new("sitename", "search terms")
+2. Maked a new GeneralScraper object: l = GeneralScraper.new("sitename", "search terms", true/false for if it is for table view)
 3. Get the data: l.getData
 
