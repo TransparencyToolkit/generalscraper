@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'generalscraper'
-  s.version     = '0.0.2'
-  s.date        = '2014-05-15'
+  s.version     = '0.0.3'
+  s.date        = '2014-05-18'
   s.summary     = 'Get all pages on a site for terms specified'
   s.description = 'Scrapes all pages on a site you specify including terms you specify.'
   s.authors     = ['M. C. McGrath']

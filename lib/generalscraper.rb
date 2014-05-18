@@ -2,6 +2,7 @@ require 'mechanize'
 require 'json'
 require 'nokogiri'
 require 'open-uri'
+require 'uploadconvert'
 
 class GeneralScraper
   def initialize(scrapesite, input, table)
@@ -64,11 +65,19 @@ class GeneralScraper
         end
       end
       if @table == false
-        pagehash[:page] = html.css("body").text
+        if url.include? ".pdf"
+          `wget -P public/uploads #{url}`
+          path = url.split("/")
+          u = UploadConvert.new("public/uploads/" + path[path.length-1].chomp.strip)
+          pdfparse = JSON.parse(u.handleDoc)
+          pdfparse.each{|k, v| pagehash[k] = v}
+        else
+          pagehash[:text] = html.css("body").text
+        end
       end
       @output.push(pagehash)
     rescue
-      puts "URL: " + url
+      
     end
   end
 
