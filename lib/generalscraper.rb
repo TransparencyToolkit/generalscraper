@@ -5,12 +5,13 @@ require 'open-uri'
 require 'uploadconvert'
 
 class GeneralScraper
-  def initialize(scrapesite, input, table)
+  def initialize(scrapesite, input, table, type)
    @input = input
    @scrapesite = scrapesite
    @output = Array.new
    @startindex = 10
    @table = table
+   @type = type
   end
 
   # Searches for links on Google
@@ -18,7 +19,7 @@ class GeneralScraper
     agent = Mechanize.new
     agent.user_agent_alias = 'Linux Firefox'
     gform = agent.get("http://google.com").form("f")
-    gform.q = "site:" + @scrapesite + " " + @input
+    gform.q = @type+":" + @scrapesite + " " + @input
     page = agent.submit(gform, gform.buttons.first)
     examine(page)
   end
@@ -26,7 +27,7 @@ class GeneralScraper
   # Examines a search page
   def examine(page)
     page.links.each do |link|
-      if (link.href.include? @scrapesite) && (!link.href.include? "webcache") && (!link.href.include? "site:"+@scrapesite)
+      if (link.href.include? @scrapesite) && (!link.href.include? "webcache") && (!link.href.include? @type+":"+@scrapesite)
         saveurl = link.href.split("?q=")
         
         if saveurl[1]
@@ -43,7 +44,7 @@ class GeneralScraper
           sleep(rand(30..90))
           @startindex += 10
           agent = Mechanize.new
-          examine(agent.get("http://google.com" + link.href))
+          examine(agent.get("http://google.com" + link.href + "&filter=0"))
         end
       end
     end
