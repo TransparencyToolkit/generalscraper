@@ -1,10 +1,13 @@
 require 'mechanize'
 require 'json'
-require 'nokogiri'
-require 'open-uri'
-require 'uploadconvert'
+require 'nokogiri' # Eventually move
+require 'open-uri' # Eventually move
+load 'parse_page.rb'
 
 class GeneralScraper
+  include ParsePage
+  attr_accessor :output
+  
   def initialize(operators, searchterm)
     @operators = operators
     @searchterm = searchterm
@@ -17,13 +20,11 @@ class GeneralScraper
 
   # TODO:
   # Get proxies working
-  # Choose one at random from list (list external)
+  # Choose one at random from list (list external input)
   # Remove delay
   # Script for running Google scraper
 
   # Separate:
-  # Get page not in examine
-  # Separate file for page parsing
   # Start agent/get URL method
   
   # Searches for links on Google
@@ -51,7 +52,6 @@ class GeneralScraper
   def siteURLSave(link)
     site_url = link.href.split("?q=")[1]
     @urllist.push(site_url.split("&")[0]) if site_url
-    # getPage(url[0]) handle this elsewhere
   end
 
   # Process search links and go to next page
@@ -65,43 +65,13 @@ class GeneralScraper
       categorizeLinks(agent.get("http://google.com" + link.href + "&filter=0"))
     end
   end
-  
-
-  # Scrape the page content
-  def getPage(url)
-    pagehash = Hash.new
-    begin
-      url.gsub!("%3F", "?")
-      url.gsub!("%3D", "=")
-      pagehash[:url] = url
-      pagehash[:date_retrieved] = Time.now
-      html = Nokogiri::HTML(open(url))
-      pagehash[:title] = html.css("title").text
-      html.css("meta").each do |m|
-        if m
-          pagehash[m['name']] = m['content']
-        end
-      end
-
-      # Download and OCR any PDFs
-      if url.include? ".pdf"
-        `wget -P public/uploads #{url}`
-        path = url.split("/")
-        u = UploadConvert.new("public/uploads/" + path[path.length-1].chomp.strip)
-        pdfparse = JSON.parse(u.handleDoc)
-        pdfparse.each{|k, v| pagehash[k] = v}
-      else
-        pagehash[:text] = html.css("body").text
-      end
-      @output.push(pagehash)
-    rescue
-      
-    end
-  end
 
   # Gets all data and returns in JSON
   def getData
     search
+    @urllist.each do |url|
+      getPageData(url)
+    end
     return JSON.pretty_generate(@output)
   end
 
@@ -112,5 +82,5 @@ class GeneralScraper
   end
 end
 
-g = GeneralScraper.new("site:nsa.gov inurl:pdf", "cybersecurity science")
-puts g.getURLs
+g = GeneralScraper.new("site:nsa.gov", "cyberwar")
+puts g.getData
