@@ -1,9 +1,0 @@
-This gem scrapes pages on the site of your choice via Google (by running
-site:sitename searchterm, inurl:term searchterm, or any other operator)
-
-To use-
-1. Download the gem 'generalscraper' and add it to your gemfile
-2. Maked a new GeneralScraper object: l = GeneralScraper.new("sitename",
-"search terms", false, "site, inurl, or other operator")
-3. Get the data: l.getData
-
