@@ -1,40 +1,29 @@
-require 'mechanize'
 require 'json'
-require 'nokogiri' # Eventually move
-require 'open-uri' # Eventually move
+require 'nokogiri'
+require 'mechanize'
+
 load 'parse_page.rb'
+load 'proxy_manager.rb'
 
 class GeneralScraper
   include ParsePage
-  attr_accessor :output
+  include ProxyManager
   
-  def initialize(operators, searchterm)
+  def initialize(operators, searchterm, proxylist)
     @operators = operators
     @searchterm = searchterm
     @op_val = @operators.split(" ")[0].split(":")[1]
+    @proxylist = IO.readlines(proxylist)
+    @usedproxies = Hash.new
     
     @output = Array.new
     @urllist = Array.new
     @startindex = 10
   end
 
-  # TODO:
-  # Get proxies working
-  # Choose one at random from list (list external input)
-  # Remove delay
-  # Script for running Google scraper
-
-  # Separate:
-  # Start agent/get URL method
-  
   # Searches for links on Google
   def search
-    agent = Mechanize.new
-    agent.user_agent_alias = 'Linux Firefox'
-    gform = agent.get("http://google.com").form("f")
-    gform.q = @operators + " " + @searchterm
-    page = agent.submit(gform, gform.buttons.first)
-    categorizeLinks(page)
+    categorizeLinks(getPage("http://google.com", @operators + " " + @searchterm))
   end
 
   # Categorizes the links on results page into results and other search pages
@@ -59,10 +48,8 @@ class GeneralScraper
     page_index_num = link.href.split("&start=")[1].split("&sa=N")[0]
     
     if page_index_num.to_i == @startindex
-      sleep(rand(30..90)) # Eventually remove
       @startindex += 10
-      agent = Mechanize.new # Need to modify this and split out
-      categorizeLinks(agent.get("http://google.com" + link.href + "&filter=0"))
+      categorizeLinks(getPage("http://google.com" + link.href + "&filter=0"))
     end
   end
 
@@ -82,5 +69,3 @@ class GeneralScraper
   end
 end
 
-g = GeneralScraper.new("site:nsa.gov", "cyberwar")
-puts g.getData

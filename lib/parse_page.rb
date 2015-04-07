@@ -22,7 +22,7 @@ module ParsePage
 
   # Download the page text
   def getHTMLText(url, pagehash)
-    html = Nokogiri::HTML(open(url)) # Eventually change this
+    html = Nokogiri::HTML(getPage(url).body)
     pagehash[:text] = html.css("body").text
     return pagehash
   end
@@ -50,7 +50,7 @@ module ParsePage
     pagehash[:date_retrieved] = Time.now
 
     # Get title and meta tag info
-    html = Nokogiri::HTML(open(url)) # Eventually modify this
+    html = Nokogiri::HTML(getPage(url).body) # Eventually modify this
     pagehash[:title] = html.css("title").text
     html.css("meta").each do |m|
       if m
