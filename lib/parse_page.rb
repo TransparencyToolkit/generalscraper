@@ -23,7 +23,7 @@ module ParsePage
   # Download the page text
   def getHTMLText(url, pagehash)
     html = Nokogiri::HTML(getPage(url).body)
-    pagehash[:text] = html.css("body").text
+    pagehash[:text] = html.css("body").text.encode("UTF-8")
     return pagehash
   end
 
@@ -35,7 +35,7 @@ module ParsePage
     # OCR PDF and save fields
     u = UploadConvert.new("public/uploads/" + path[path.length-1].chomp.strip)
     pdfparse = JSON.parse(u.handleDoc)
-    pdfparse.each{|k, v| pagehash[k] = v}
+    pdfparse.each{|k, v| pagehash[k] = v.encode("UTF-8")}
     return pagehash
   end
 
@@ -51,7 +51,7 @@ module ParsePage
 
     # Get title and meta tag info
     html = Nokogiri::HTML(getPage(url).body) # Eventually modify this
-    pagehash[:title] = html.css("title").text
+    pagehash[:title] = html.css("title").text.encode("UTF-8")
     html.css("meta").each do |m|
       if m
         pagehash[m['name']] = m['content']
