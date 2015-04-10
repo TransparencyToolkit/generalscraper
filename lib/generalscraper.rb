@@ -29,14 +29,25 @@ class GeneralScraper
   # Categorizes the links on results page into results and other search pages
   def categorizeLinks(page)
     page.links.each do |link|
-      if (link.href.include? @op_val) && (!link.href.include? "webcache") && (!link.href.include? @operators.gsub(" ", "+"))
+      if isResultLink?(link)
         siteURLSave(link)
-      elsif (link.href.include? "&sa=N") && (link.href.include? "&start=")
+      elsif isSearchPageLink?(link)
         nextSearchPage(link)
       end
     end
   end
 
+  # Determines if url is link to search result
+  def isResultLink?(link)
+    return (link.href.include? @op_val) && (!link.href.include? "webcache") && (!link.href.include? @operators.gsub(" ", "+"))
+  end
+
+  # Determines if URL is link to next search page
+  def isSearchPageLink?(link)
+    return (link.href.include? "&sa=N") && (link.href.include? "&start=")
+  end
+
+  
   # Parse and save the URLs for search results
   def siteURLSave(link)
     site_url = link.href.split("?q=")[1]
@@ -53,6 +64,7 @@ class GeneralScraper
     end
   end
 
+  
   # Gets all data and returns in JSON
   def getData
     search
