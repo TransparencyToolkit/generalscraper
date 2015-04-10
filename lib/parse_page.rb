@@ -4,26 +4,26 @@ module ParsePage
   # Get both page metadata and text
   def getPageData(url)
     begin
-      pagehash = getMetadata(url)
-      pagehash = getContent(url, pagehash)
+      html = Nokogiri::HTML(getPage(url).body)
+      pagehash = getMetadata(url, html)
+      pagehash = getContent(url, pagehash, html)
       @output.push(pagehash)
     rescue
     end
   end
 
   # Get the page content by type of page
-  def getContent(url, pagehash)
+  def getContent(url, pagehash, html)
     if url.include? ".pdf"
       return getPDF(url, pagehash)
     else
-      return getHTMLText(url, pagehash)
+      return getHTMLText(url, pagehash, html)
     end
   end
 
   # Download the page text
-  def getHTMLText(url, pagehash)
-    html = Nokogiri::HTML(getPage(url).body)
-    pagehash[:text] = html.css("body").text.encode("UTF-8")
+  def getHTMLText(url, pagehash, html)
+    pagehash[:text] = fixEncode(html.css("body").text)
     return pagehash
   end
 
@@ -35,12 +35,12 @@ module ParsePage
     # OCR PDF and save fields
     u = UploadConvert.new("public/uploads/" + path[path.length-1].chomp.strip)
     pdfparse = JSON.parse(u.handleDoc)
-    pdfparse.each{|k, v| pagehash[k] = v.encode("UTF-8")}
+    pdfparse.each{|k, v| pagehash[k] = fixEncode(v)}
     return pagehash
   end
 
   # Get the page metadata
-  def getMetadata(url)
+  def getMetadata(url, html)
     pagehash = Hash.new
 
     # Save URL and date retreived
@@ -50,14 +50,21 @@ module ParsePage
     pagehash[:date_retrieved] = Time.now
 
     # Get title and meta tag info
-    html = Nokogiri::HTML(getPage(url).body) # Eventually modify this
-    pagehash[:title] = html.css("title").text.encode("UTF-8")
+    pagehash[:title] = fixEncode(html.css("title").text)
     html.css("meta").each do |m|
       if m
-        pagehash[m['name']] = m['content']
+        pagehash[m['name']] = fixEncode(m['content'])
       end
     end
 
     return pagehash
+  end
+
+  def fixEncode(str)
+    if str.is_a?(String)
+      return str.unpack('C*').pack('U*')
+    else
+      return str
+    end
   end
 end
