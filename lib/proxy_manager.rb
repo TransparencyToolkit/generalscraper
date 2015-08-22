@@ -4,10 +4,16 @@ require 'uri'
 
 module ProxyManager 
   # Get the page with a proxy
-  def getPage(url, form_input = nil, fail_count = 0)
+  def getPage(url, form_input = nil, fail_count = 0, use_proxy)
     agent = Mechanize.new do |a|
       a.user_agent_alias = "Linux Firefox"
-      a.set_proxy(*getRandomProxy(url))
+
+      # Set proxy if specified, otherwise delay to avoid blocks
+      if use_proxy
+        a.set_proxy(*getRandomProxy(url))
+      else
+        sleep(20)
+      end
     end
 
     # Slightly different based on filling in form or not
@@ -19,8 +25,8 @@ module ProxyManager
       else
         return agent.get(url)
       end
-    rescue # Only retry request 5 times
-      getPage(url, form_input, fail_count+=1) if fail_count < 5
+    rescue # Only retry request 10 times
+      getPage(url, form_input, fail_count+=1) if fail_count < 10
     end
   end
 

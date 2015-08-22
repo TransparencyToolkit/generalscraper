@@ -9,7 +9,7 @@ class GeneralScraper
   include ParsePage
   include ProxyManager
   
-  def initialize(operators, searchterm, proxylist)
+  def initialize(operators, searchterm, proxylist, use_proxy)
     @operators = operators
     @searchterm = searchterm
     @op_val = @operators.split(" ")[0].split(":")[1]
@@ -19,11 +19,12 @@ class GeneralScraper
     @output = Array.new
     @urllist = Array.new
     @startindex = 10
+    @use_proxy = use_proxy
   end
 
   # Searches for links on Google
   def search
-    categorizeLinks(getPage("http://google.com", @operators + " " + @searchterm))
+    categorizeLinks(getPage("http://google.com", @operators + " " + @searchterm, @use_proxy))
   end
 
   # Categorizes the links on results page into results and other search pages
@@ -60,7 +61,7 @@ class GeneralScraper
     
     if page_index_num.to_i == @startindex
       @startindex += 10
-      categorizeLinks(getPage("http://google.com" + link.href + "&filter=0"))
+      categorizeLinks(getPage("http://google.com" + link.href + "&filter=0", @use_proxy))
     end
   end
 
@@ -80,4 +81,3 @@ class GeneralScraper
     return JSON.pretty_generate(@urllist)
   end
 end
-

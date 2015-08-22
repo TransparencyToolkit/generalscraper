@@ -2,7 +2,7 @@ This gem scrapes Google using any operators specified.
 
 1. Download the gem 'generalscraper' and add it to your gemfile
 2. Maked a new GeneralScraper object:
-l = GeneralScraper.new("site:site.com inurl:.pdf and other operators", "search terms", "path to proxy list")
+l = GeneralScraper.new("site:site.com inurl:.pdf and other operators", "search terms", "path to proxy list", true/false use proxies)
 3. Get the list or resulting pages (l.getURLs) or get full text of results (l.getData)
 
 The proxy list must be a list of proxies in a textfile with each IP on its own line.
