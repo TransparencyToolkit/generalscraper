@@ -81,3 +81,4 @@ class GeneralScraper
     return JSON.pretty_generate(@urllist)
   end
 end
+

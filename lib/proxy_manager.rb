@@ -12,7 +12,7 @@ module ProxyManager
       if use_proxy
         a.set_proxy(*getRandomProxy(url))
       else
-        sleep(20)
+        sleep(rand(30..90))
       end
     end
 
