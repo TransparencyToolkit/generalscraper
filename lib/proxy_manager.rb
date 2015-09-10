@@ -1,10 +1,11 @@
 require 'active_support/time'
 require 'mechanize'
 require 'uri'
+require 'selenium-webdriver'
 
 module ProxyManager 
   # Get the page with a proxy
-  def getPage(url, form_input = nil, fail_count = 0, use_proxy)
+  def getPage(url, driver, form_input = nil, fail_count = 0, use_proxy)
     agent = Mechanize.new do |a|
       a.user_agent_alias = "Linux Firefox"
 
@@ -19,13 +20,20 @@ module ProxyManager
     # Slightly different based on filling in form or not
     begin
       if form_input
-        gform = agent.get(url).form("f")
-        gform.q = form_input
-        return agent.submit(gform, gform.buttons.first)
+        driver.navigate.to url
+        element = driver.find_element(name: "q")
+        element.send_keys form_input
+        element.submit
+        puts "Searched for: " + form_input
+        
+        return driver
       else
-        return agent.get(url)
+        puts "Getting page " + url
+        driver.navigate.to url
+        return driver
       end
     rescue # Only retry request 10 times
+      puts "FAILED"
       getPage(url, form_input, fail_count+=1) if fail_count < 10
     end
   end
