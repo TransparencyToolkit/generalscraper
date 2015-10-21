@@ -33,8 +33,11 @@ module ProxyManager
         return driver
       end
     rescue # Only retry request 10 times
-      puts "FAILED"
-      getPage(url, form_input, fail_count+=1) if fail_count < 10
+      begin
+        puts "FAILED"
+        getPage(url, form_input, fail_count+=1) if fail_count < 10
+      rescue
+      end
     end
   end
 

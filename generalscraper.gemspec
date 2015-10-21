@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'generalscraper'
-  s.version     = '0.0.10'
-  s.date        = '2014-09-09'
+  s.version     = '0.0.11'
+  s.date        = '2014-10-21'
   s.summary     = 'Scrapes Google'
   s.description = 'Scrapes Google'
   s.authors     = ['M. C. McGrath']
