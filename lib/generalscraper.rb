@@ -1,46 +1,50 @@
 require 'json'
 require 'nokogiri'
 require 'mechanize'
+require 'requestmanager'
+require 'pry'
 
 load 'parse_page.rb'
-load 'proxy_manager.rb'
 
 class GeneralScraper
   include ParsePage
-  include ProxyManager
   
-  def initialize(operators, searchterm, proxylist, use_proxy)
+  def initialize(operators, searchterm, proxylist)
     @operators = operators
     @searchterm = searchterm
     @op_val = @operators.split(" ")[0].split(":")[1]
-    @proxylist = IO.readlines(proxylist)
-    @usedproxies = Hash.new
+    @proxylist = proxylist
+    @requests = RequestManager.new(@proxylist, [4, 15], 1)
     
     @output = Array.new
     @urllist = Array.new
     @startindex = 10
-    @use_proxy = use_proxy
-
-    # Generate driver
-    profile = Selenium::WebDriver::Firefox::Profile.new
-    profile['intl.accept_languages'] = 'en'
-    @driver = Selenium::WebDriver.for :firefox, profile: profile
   end
 
   # Searches for links on Google
   def search
-    categorizeLinks(getPage("http://google.com", @driver, @operators + " " + @searchterm, @use_proxy))
+    check_results(@requests.get_page("http://google.com", @operators + " " + @searchterm),
+                  "http://google.com", (@operators + " " + @searchterm))
+  end
+
+  # Check that page with links loaded
+  def check_results(page, *requested_page)
+    if page.include?("To continue, please type the characters below:")
+      @requests.restart_browser
+      check_results(@requests.get_page(requested_page), requested_page)
+    else
+      categorizeLinks(page)
+    end
   end
 
   # Gets the links from the page
-  def getLinks(page)
-    # Sleep while things load
-    sleep(10)
-    
-    # Extract arr
-    return page.find_elements(css: "a").inject(Array.new) do |link_arr, al|
+  def getLinks(page)   
+    html = Nokogiri::HTML(page)
+
+    # Get array of links
+    return html.css("a").inject(Array.new) do |link_arr, al|
       begin
-        link_arr.push(al.attribute("href"))
+        link_arr.push(al["href"])
       rescue
         
       end
@@ -52,12 +56,14 @@ class GeneralScraper
   # Categorizes the links on results page into results and other search pages
   def categorizeLinks(page)
     links = getLinks(page)
+
+    # Categorize as results or search pages
     links.each do |link| 
       if link
         if isResultLink?(link)
           siteURLSave(link)
         elsif isSearchPageLink?(link)
-          nextSearchPage(link)
+          nextSearchPage("google.com"+link)
         end
       end
     end
@@ -88,26 +94,25 @@ class GeneralScraper
   
     if page_index_num.to_i == @startindex
       @startindex += 10
-      categorizeLinks(getPage(link, @driver, @use_proxy))
+      check_results(@requests.get_page(link), link)
     end
   end
 
-  
   # Gets all data and returns in JSON
   def getData
     search
     @urllist.each do |url|
-      getPageData(url, @driver)
+      getPageData(url)
     end
-    @driver.close
+
+    @requests.close_all_browsers
     return JSON.pretty_generate(@output)
   end
 
   # Returns a list of search result URLs
   def getURLs
     search
-    @driver.close
+    @requests.close_all_browsers
     return JSON.pretty_generate(@urllist)
   end
 end
-

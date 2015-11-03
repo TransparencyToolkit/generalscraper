@@ -2,10 +2,10 @@ require 'uploadconvert'
 
 module ParsePage
   # Get both page metadata and text
-  def getPageData(url, driver)
+  def getPageData(url)
     begin
-      page = getPage(url, driver, nil, 5, false)
-      html = Nokogiri::HTML(page.page_source)
+      page = @requests.get_page(url)
+      html = Nokogiri::HTML(page)
       pagehash = getMetadata(url, html)
       pagehash = getContent(url, pagehash, html)
       @output.push(pagehash)
