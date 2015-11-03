@@ -14,7 +14,7 @@ class GeneralScraper
     @searchterm = searchterm
     @op_val = @operators.split(" ")[0].split(":")[1]
     @proxylist = proxylist
-    @requests = RequestManager.new(@proxylist, [4, 15], 1)
+    @requests = RequestManager.new(@proxylist, [30, 90], 1)
     
     @output = Array.new
     @urllist = Array.new
