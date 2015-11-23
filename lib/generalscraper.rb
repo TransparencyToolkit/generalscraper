@@ -9,12 +9,11 @@ load 'parse_page.rb'
 class GeneralScraper
   include ParsePage
   
-  def initialize(operators, searchterm, proxylist)
+  def initialize(operators, searchterm, requests)
     @operators = operators
     @searchterm = searchterm
     @op_val = @operators.split(" ")[0].split(":")[1]
-    @proxylist = proxylist
-    @requests = RequestManager.new(@proxylist, [30, 90], 1)
+    @requests = requests
     
     @output = Array.new
     @urllist = Array.new
