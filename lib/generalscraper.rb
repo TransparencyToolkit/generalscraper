@@ -5,15 +5,17 @@ require 'requestmanager'
 require 'pry'
 
 load 'parse_page.rb'
+load 'captcha.rb'
 
 class GeneralScraper
   include ParsePage
   
-  def initialize(operators, searchterm, requests)
+  def initialize(operators, searchterm, requests, solver_details)
     @operators = operators
     @searchterm = searchterm
     @op_val = @operators.split(" ")[0].split(":")[1]
     @requests = requests
+    @solver_details = solver_details
     
     @output = Array.new
     @urllist = Array.new
@@ -29,19 +31,30 @@ class GeneralScraper
   # Check that page with links loaded
   def check_results(page, *requested_page)
     if page.include?("To continue, please type the characters below:")
-      @requests.restart_browser
-      check_results(@requests.get_page(requested_page), requested_page)
-    else
-      categorizeLinks(page)
+      # Solve CAPTCHA if enabled
+      if @solver_details
+        c = Captcha.new(@requests, @solver_details)
+        c.solve
+        
+        # Proceed as normal
+        sleep(1)
+        check_results(@requests.get_updated_current_page)
+        
+      else # Restart and try again if CAPTCHA-solving not enabled
+        @requests.restart_browser
+        check_results(@requests.get_page(requested_page), requested_page)
+      end
+    else # No CAPTCHA found :)
+      navigate_save_results(page)
     end
   end
 
-  # Gets the links from the page
-  def getLinks(page)   
+  # Gets the links from the page that match css selector in block
+  def get_links(page, &block)
     html = Nokogiri::HTML(page)
 
     # Get array of links
-    return html.css("a").inject(Array.new) do |link_arr, al|
+    return yield(html).inject(Array.new) do |link_arr, al|
       begin
         link_arr.push(al["href"])
       rescue
@@ -53,42 +66,27 @@ class GeneralScraper
   end
 
   # Categorizes the links on results page into results and other search pages
-  def categorizeLinks(page)
-    links = getLinks(page)
+  def navigate_save_results(page)
+    # Save result links for page
+    result_links = get_links(page) {|html| html.css("h3.r").css("a")}
+    result_links.each do |link|
+      site_url_save(link)
+    end
 
-    # Categorize as results or search pages
-    links.each do |link| 
-      if link
-        if isResultLink?(link)
-          siteURLSave(link)
-        elsif isSearchPageLink?(link)
-          nextSearchPage("google.com"+link)
-        end
-      end
+    # Go to next page
+    next_pages = get_links(page) {|html| html.css("#pnnext")}
+    next_pages.each do |link|
+      next_search_page("google.com"+link)
     end
   end
-
-  # Determines if url is link to search result
-  def isResultLink?(link)
-    return (link.include? @op_val) &&
-           (!link.include? "webcache") &&
-           (!link.include? @operators.gsub(" ", "+")) &&
-           (!link.include?("translate.google"))
-  end
-
-  # Determines if URL is link to next search page
-  def isSearchPageLink?(link)
-    return (link.include? "&sa=N") && (link.include? "&start=")
-  end
-
   
   # Parse and save the URLs for search results
-  def siteURLSave(link)
+  def site_url_save(link)
     @urllist.push(link)
   end
 
   # Process search links and go to next page
-  def nextSearchPage(link)
+  def next_search_page(link)
     page_index_num = link.split("&start=")[1].split("&sa=N")[0]
   
     if page_index_num.to_i == @startindex
