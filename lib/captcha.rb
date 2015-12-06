@@ -22,7 +22,11 @@ class Captcha
   # Have the captcha solved
   def get_captcha_solved
     client = TwoCaptcha.new(@captcha_key)
-    captcha = client.decode!(file: File.open(@time_name+"_cropped.png"))
+    begin
+      captcha = client.decode!(file: File.open(@time_name+"_cropped.png"))
+    rescue # If it times out
+      get_captcha_solved
+    end
     return captcha.text
   end
 
