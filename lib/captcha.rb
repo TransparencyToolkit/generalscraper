@@ -1,5 +1,4 @@
 require 'rmagick'
-require 'imgurr'
 require 'curb'
 require 'two_captcha'
 include Magick
