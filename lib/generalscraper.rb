@@ -44,6 +44,9 @@ class GeneralScraper
         @requests.restart_browser
         check_results(@requests.get_page(requested_page), requested_page)
       end
+    elsif page.include?("403") && page.length < 100
+      @requests.restart_browser
+      check_results(@requests.get_page(requested_page), requested_page)
     else # No CAPTCHA found :)
       navigate_save_results(page)
     end
