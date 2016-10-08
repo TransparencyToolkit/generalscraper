@@ -8,7 +8,7 @@ module ParsePage
       html = Nokogiri::HTML(page)
       pagehash = getMetadata(url, html)
       pagehash = getContent(url, pagehash, html)
-      @output.push(pagehash)
+      return pagehash
     rescue
     end
   end

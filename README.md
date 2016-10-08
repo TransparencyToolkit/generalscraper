@@ -4,7 +4,7 @@ This gem scrapes Google using any operators specified.
 2. Make a new request manager:
 requests = RequestManager.new("path/to/proxielist", [min request wait time, max request wait time], # of browsers)
 3. Make a new GeneralScraper object:
-l = GeneralScraper.new("site:site.com inurl:.pdf and other operators", "search terms", requests, nil or captcha hash)
+l = GeneralScraper.new("site:site.com inurl:.pdf and other operators", "search terms", requests, nil or captcha hash, nil or cm_hash)
 4. Get the list or resulting pages (l.getURLs) or get full text of results (l.getData)
 
 The proxy list must be a list of proxies in a textfile with each IP on its own line.

@@ -10,7 +10,7 @@ load 'captcha.rb'
 class GeneralScraper
   include ParsePage
   
-  def initialize(operators, searchterm, requests, solver_details)
+  def initialize(operators, searchterm, requests, solver_details, cm_hash)
     @operators = operators
     @searchterm = searchterm
     @op_val = @operators.split(" ")[0].split(":")[1]
@@ -20,6 +20,10 @@ class GeneralScraper
     @output = Array.new
     @urllist = Array.new
     @startindex = 10
+
+    # Handle crawler manager info
+    @cm_url = cm_hash[:crawler_manager_url] if cm_hash
+    @selector_id = cm_hash[:selector_id] if cm_hash
   end
 
   # Searches for links on Google
@@ -44,11 +48,13 @@ class GeneralScraper
         @requests.restart_browser
         check_results(@requests.get_page(requested_page), requested_page)
       end
-    elsif page.include?("403") && page.length < 100
-      @requests.restart_browser
-      check_results(@requests.get_page(requested_page), requested_page)
     else # No CAPTCHA found :)
-      navigate_save_results(page)
+      begin
+        navigate_save_results(page)
+      rescue Exception
+        @requests.restart_browser
+        check_results(@requests.get_page(requested_page), requested_page)
+      end
     end
   end
 
@@ -102,12 +108,35 @@ class GeneralScraper
   def getData
     search
     @urllist.each do |url|
-      getPageData(url)
+      report_results(getPageData(url), url)
     end
 
     @requests.close_all_browsers
-    return JSON.pretty_generate(@output)
   end
+
+  # Figure out how to report results
+  def report_results(results, link)
+    if @cm_url
+      report_incremental(results, link)
+    else
+      report_bulk(results)
+    end
+  end
+
+  # Report results back to Harvester incrementally
+  def report_incremental(results, link)
+    curl_url = @cm_url+"/relay_results"
+    c = Curl::Easy.http_post(curl_url,
+                             Curl::PostField.content('selector_id', @selector_id),
+                             Curl::PostField.content('status_message', "Collected " + link),
+                             Curl::PostField.content('results', JSON.pretty_generate(results)))
+  end
+
+  # Add page hash to output for bulk reporting
+  def report_bulk(results)
+    @output.push(results)
+  end
+  
 
   # Returns a list of search result URLs
   def getURLs
@@ -115,4 +144,10 @@ class GeneralScraper
     @requests.close_all_browsers
     return JSON.pretty_generate(@urllist)
   end
+
+  # Get the JSON of all the data
+  def get_json_data
+    return JSON.pretty_generate(@output)
+  end
 end
+
