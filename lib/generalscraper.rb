@@ -108,7 +108,10 @@ class GeneralScraper
   def getData
     search
     @urllist.each do |url|
-      report_results(getPageData(url), url)
+      begin
+        report_results(getPageData(url), url)
+      rescue
+      end
     end
 
     @requests.close_all_browsers
@@ -129,7 +132,7 @@ class GeneralScraper
     c = Curl::Easy.http_post(curl_url,
                              Curl::PostField.content('selector_id', @selector_id),
                              Curl::PostField.content('status_message', "Collected " + link),
-                             Curl::PostField.content('results', JSON.pretty_generate(results)))
+                             Curl::PostField.content('results', JSON.pretty_generate([results])))
   end
 
   # Add page hash to output for bulk reporting

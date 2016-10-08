@@ -3,20 +3,21 @@ require 'uploadconvert'
 module ParsePage
   # Get both page metadata and text
   def getPageData(url)
-    begin
-      page = @requests.get_page(url)
-      html = Nokogiri::HTML(page)
-      pagehash = getMetadata(url, html)
-      pagehash = getContent(url, pagehash, html)
-      return pagehash
-    rescue
-    end
+    page = @requests.get_page(url)
+    html = Nokogiri::HTML(page)
+    pagehash = getMetadata(url, html)
+    pagehash = getContent(url, pagehash, html)
+    return pagehash
   end
 
   # Get the page content by type of page
   def getContent(url, pagehash, html)
     if url.include? ".pdf"
-      return getPDF(url, pagehash)
+      begin
+        return getPDF(url, pagehash)
+      rescue
+        return nil
+      end
     else
       return getHTMLText(url, pagehash, html)
     end
@@ -30,7 +31,7 @@ module ParsePage
 
   # Download and extract text from PDF
   def getPDF(url, pagehash)
-    `wget -P public/uploads #{url}`
+    `wget --tries=2 -P public/uploads #{url}`
     path = url.split("/")
 
     # OCR PDF and save fields
@@ -51,7 +52,7 @@ module ParsePage
     pagehash[:date_retrieved] = Time.now
 
     # Get title and meta tag info
-    pagehash[:title] = fixEncode(html.css("title").text)
+    pagehash[:page_title] = fixEncode(html.css("title").text)
     html.css("meta").each do |m|
       if m
         pagehash[m['name']] = fixEncode(m['content'])
