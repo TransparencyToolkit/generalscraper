@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'generalscraper'
-  s.version     = '0.0.24'
+  s.version     = '0.0.25'
   s.date        = '2016-10-30'
   s.summary     = 'Scrapes Google'
   s.description = 'Scrapes Google'
