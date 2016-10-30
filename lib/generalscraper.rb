@@ -30,6 +30,7 @@ class GeneralScraper
   def search
     check_results(@requests.get_page("http://google.com", @operators + " " + @searchterm),
                   "http://google.com", (@operators + " " + @searchterm))
+    report_status("Got search results for " + @operators.to_s + " " + @searchterm.to_s)
   end
 
   # Check that page with links loaded
@@ -45,13 +46,15 @@ class GeneralScraper
         check_results(@requests.get_updated_current_page)
         
       else # Restart and try again if CAPTCHA-solving not enabled
+        report_status("CAPTCHA Found. CAPTCHA solving not enabled. Trying to restart browser.")
         @requests.restart_browser
         check_results(@requests.get_page(requested_page), requested_page)
       end
     else # No CAPTCHA found :)
       begin
         navigate_save_results(page)
-      rescue Exception
+      rescue => e
+        report_status("Error: " + e.to_s + " Retrying...")
         @requests.restart_browser
         check_results(@requests.get_page(requested_page), requested_page)
       end
@@ -66,8 +69,8 @@ class GeneralScraper
     return yield(html).inject(Array.new) do |link_arr, al|
       begin
         link_arr.push(al["href"])
-      rescue
-        
+      rescue => e
+        report_status("Error getting links: " + e.to_s)
       end
      
       link_arr
@@ -85,6 +88,7 @@ class GeneralScraper
     # Go to next page
     next_pages = get_links(page) {|html| html.css("#pnnext")}
     next_pages.each do |link|
+      report_status("Going to next page: google.com"+link)
       next_search_page("google.com"+link)
     end
   end
@@ -114,6 +118,7 @@ class GeneralScraper
       end
     end
 
+    report_status("Finished collecting data for " + @operators.to_s + " " + @searchterm.to_s)
     @requests.close_all_browsers
   end
 
@@ -135,6 +140,16 @@ class GeneralScraper
                              Curl::PostField.content('results', JSON.pretty_generate([results])))
   end
 
+  # Report Harvester status message
+  def report_status(status_msg)
+    if @cm_url
+      curl_url = @cm_url+"/update_status"
+      c = Curl::Easy.http_post(curl_url,
+                               Curl::PostField.content('selector_id', @selector_id),
+                               Curl::PostField.content('status_message', status_msg))
+    end
+  end
+  
   # Add page hash to output for bulk reporting
   def report_bulk(results)
     @output.push(results)

@@ -16,6 +16,7 @@ module ParsePage
       begin
         return getPDF(url, pagehash)
       rescue
+        report_status("PDF parsing failed for "+url.to_s)
         return nil
       end
     else
