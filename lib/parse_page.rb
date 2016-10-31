@@ -31,11 +31,12 @@ module ParsePage
 
   # Download and extract text from PDF
   def getPDF(url, pagehash)
-    `wget --tries=2 -P public/uploads #{url}`
     path = url.split("/")
-
+    filename = path[path.length-1].chomp.strip.gsub(" ", "_").gsub("%20", "_")
+    `wget --tries=2 #{url} -O public/uploads/#{filename}`
+    
     # OCR PDF and save fields
-    u = UploadConvert.new("public/uploads/" + path[path.length-1].chomp.strip)
+    u = UploadConvert.new("public/uploads/" + filename)
     pdfparse = JSON.parse(u.handleDoc)
     pdfparse.each{|k, v| pagehash[k] = fixEncode(v)}
     return pagehash
