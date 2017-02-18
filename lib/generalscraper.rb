@@ -6,6 +6,7 @@ require 'pry'
 
 load 'parse_page.rb'
 load 'captcha.rb'
+load 'translate_page.rb'
 
 class GeneralScraper
   include ParsePage

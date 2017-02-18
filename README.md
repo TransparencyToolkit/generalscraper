@@ -16,3 +16,7 @@ The hash to have CAPTCHAs solved is as follows-
 If you don't want CAPTCHA's solved, just pass nil.
 
 [![Code Climate](https://codeclimate.com/github/TransparencyToolkit/generalscraper/badges/gpa.svg)](https://codeclimate.com/github/TransparencyToolkit/generalscraper)
+
+To translate pages-
+requests_google = RequestManager.new(nil, [1, 3], 1)
+t = TranslatePage.new([link, array], requests_google)
